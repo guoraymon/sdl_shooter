@@ -51,21 +51,25 @@ void Game::init()
     // SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, surface);
 
     player.texture = IMG_LoadTexture(renderer, "assets/image/SpaceShip.png");
-    player.width = 64;
-    player.height = 64;
+    SDL_QueryTexture(player.texture, NULL, NULL, &player.width, &player.height);
+    player.width /= 3;
+    player.height /= 3;
     player.position.x = windowWidth / 2 - player.width / 2;
     player.position.y = windowHeight - player.height;
 
     playerProjectileTemplate.texture = IMG_LoadTexture(renderer, "assets/image/laser-1.png");
-    playerProjectileTemplate.width = 81;
-    playerProjectileTemplate.height = 126;
+    SDL_QueryTexture(playerProjectileTemplate.texture, NULL, NULL, &playerProjectileTemplate.width, &playerProjectileTemplate.height);
 
     randomGenerator = std::mt19937(std::random_device{}());
     randomDistribution = std::uniform_real_distribution<float>(0.0f, 1.0f);
 
     enemyTemplate.texture = IMG_LoadTexture(renderer, "assets/image/insect-1.png");
-    enemyTemplate.width = 64;
-    enemyTemplate.height = 64;
+    SDL_QueryTexture(enemyTemplate.texture, NULL, NULL, &enemyTemplate.width, &enemyTemplate.height);
+    enemyTemplate.width /= 2;
+    enemyTemplate.height /= 2;
+
+    enemyProjectileTemplate.texture = IMG_LoadTexture(renderer, "assets/image/bullet-1.png");
+    SDL_QueryTexture(enemyProjectileTemplate.texture, NULL, NULL, &enemyProjectileTemplate.width, &enemyProjectileTemplate.height);
 }
 
 void Game::run()
@@ -119,14 +123,6 @@ void Game::run()
             }
         }
 
-        // Spawn enemies
-        if (randomDistribution(randomGenerator) < 0.02f)
-        {
-            auto enemy = new Enemy(enemyTemplate);
-            enemy->position.x = randomDistribution(randomGenerator) * (windowWidth - enemy->width);
-            enemy->position.y = -enemy->height;
-            enemies.push_back(enemy);
-        }
         // Update and render enemies
         for (auto it = enemies.begin(); it != enemies.end();)
         {
@@ -139,8 +135,54 @@ void Game::run()
             }
             else
             {
+                // Enemy shooting
+                auto now = SDL_GetTicks();
+                if (enemy->lastShootTime + enemy->coolDown <= now)
+                {
+                    auto enemyProjectile = new EnemyProjectile(enemyProjectileTemplate);
+                    enemyProjectile->position.x = enemy->position.x + enemy->width / 2 - enemyProjectile->width / 2;
+                    enemyProjectile->position.y = enemy->position.y + enemy->height;
+                    // direction towards player
+                    float dirX = (player.position.x + player.width / 2) - (enemy->position.x + enemy->width / 2);
+                    float dirY = (player.position.y + player.height / 2) - (enemy->position.y + enemy->height / 2);
+                    float length = sqrtf(dirX * dirX + dirY * dirY);
+                    enemyProjectile->direction.x = dirX / length;
+                    enemyProjectile->direction.y = dirY / length;
+                    enemyProjectiles.push_back(enemyProjectile);
+                    enemy->lastShootTime = now;
+                }
                 SDL_Rect enemyRect = {static_cast<int>(enemy->position.x), static_cast<int>(enemy->position.y), enemy->width, enemy->height};
                 SDL_RenderCopy(renderer, enemy->texture, NULL, &enemyRect);
+                ++it;
+            }
+        }
+        // Spawn enemies
+        if (randomDistribution(randomGenerator) < 0.02f)
+        {
+            auto enemy = new Enemy(enemyTemplate);
+            enemy->position.x = randomDistribution(randomGenerator) * (windowWidth - enemy->width);
+            enemy->position.y = -enemy->height;
+            enemies.push_back(enemy);
+        }
+        // Update and render enemy projectiles
+        for (auto it = enemyProjectiles.begin(); it != enemyProjectiles.end();)
+        {
+            auto projectile = *it;
+            projectile->position.x += projectile->direction.x * projectile->speed * deltaTime;
+            projectile->position.y += projectile->direction.y * projectile->speed * deltaTime;
+            if (projectile->position.x < -projectile->width ||
+                projectile->position.x > windowWidth ||
+                projectile->position.y < -projectile->height ||
+                projectile->position.y > windowHeight)
+            {
+                delete projectile;
+                it = enemyProjectiles.erase(it);
+            }
+            else
+            {
+                SDL_Rect projectileRect = {static_cast<int>(projectile->position.x), static_cast<int>(projectile->position.y), projectile->width, projectile->height};
+                float angle = atan2f(projectile->direction.y, projectile->direction.x) * 180.0f / M_PI - 90.0f;
+                SDL_RenderCopyEx(renderer, projectile->texture, NULL, &projectileRect, angle, NULL, SDL_FLIP_NONE);
                 ++it;
             }
         }
@@ -221,21 +263,30 @@ void Game::clean()
     // TTF_CloseFont(font);
     // TTF_Quit();
 
+    // Clean up enemies
     for (auto &enemy : enemies)
     {
         delete enemy;
     }
     enemies.clear();
     SDL_DestroyTexture(enemyTemplate.texture);
+    // Clean up enemy projectiles
+    for (auto &projectile : enemyProjectiles)
+    {
+        delete projectile;
+    }
+    enemyProjectiles.clear();
+    SDL_DestroyTexture(enemyProjectileTemplate.texture);
 
+    // Clean up player
+    SDL_DestroyTexture(player.texture);
+    // Clean up player projectiles
     for (auto &projectile : playerProjectiles)
     {
         delete projectile;
     }
     playerProjectiles.clear();
     SDL_DestroyTexture(playerProjectileTemplate.texture);
-
-    SDL_DestroyTexture(player.texture);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

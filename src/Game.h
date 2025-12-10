@@ -14,13 +14,18 @@ private:
     int windowHeight = 667;
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
+    
     Player player;
     PlayerProjectile playerProjectileTemplate;
     std::list<PlayerProjectile *> playerProjectiles;
+
     std::mt19937 randomGenerator;
     std::uniform_real_distribution<float> randomDistribution;
+
     Enemy enemyTemplate;
     std::list<Enemy *> enemies;
+    EnemyProjectile enemyProjectileTemplate;
+    std::list<EnemyProjectile *> enemyProjectiles;
 
 public:
     Game(/* args */);

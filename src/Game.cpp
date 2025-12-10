@@ -59,6 +59,13 @@ void Game::init()
     playerProjectileTemplate.texture = IMG_LoadTexture(renderer, "assets/image/laser-1.png");
     playerProjectileTemplate.width = 81;
     playerProjectileTemplate.height = 126;
+
+    randomGenerator = std::mt19937(std::random_device{}());
+    randomDistribution = std::uniform_real_distribution<float>(0.0f, 1.0f);
+
+    enemyTemplate.texture = IMG_LoadTexture(renderer, "assets/image/insect-1.png");
+    enemyTemplate.width = 64;
+    enemyTemplate.height = 64;
 }
 
 void Game::run()
@@ -108,6 +115,32 @@ void Game::run()
             {
                 SDL_Rect projectileRect = {static_cast<int>(projectile->position.x), static_cast<int>(projectile->position.y), projectile->width, projectile->height};
                 SDL_RenderCopy(renderer, projectile->texture, NULL, &projectileRect);
+                ++it;
+            }
+        }
+
+        // Spawn enemies
+        if (randomDistribution(randomGenerator) < 0.02f)
+        {
+            auto enemy = new Enemy(enemyTemplate);
+            enemy->position.x = randomDistribution(randomGenerator) * (windowWidth - enemy->width);
+            enemy->position.y = -enemy->height;
+            enemies.push_back(enemy);
+        }
+        // Update and render enemies
+        for (auto it = enemies.begin(); it != enemies.end();)
+        {
+            auto enemy = *it;
+            enemy->position.y += enemy->speed * deltaTime;
+            if (enemy->position.y > windowHeight)
+            {
+                delete enemy;
+                it = enemies.erase(it);
+            }
+            else
+            {
+                SDL_Rect enemyRect = {static_cast<int>(enemy->position.x), static_cast<int>(enemy->position.y), enemy->width, enemy->height};
+                SDL_RenderCopy(renderer, enemy->texture, NULL, &enemyRect);
                 ++it;
             }
         }
@@ -187,6 +220,13 @@ void Game::clean()
     // SDL_DestroyTexture(textTexture);
     // TTF_CloseFont(font);
     // TTF_Quit();
+
+    for (auto &enemy : enemies)
+    {
+        delete enemy;
+    }
+    enemies.clear();
+    SDL_DestroyTexture(enemyTemplate.texture);
 
     for (auto &projectile : playerProjectiles)
     {

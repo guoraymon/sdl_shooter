@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include <list>
+#include <random>
 #include "SDL.h"
 #include "Object.h"
 
@@ -16,6 +17,10 @@ private:
     Player player;
     PlayerProjectile playerProjectileTemplate;
     std::list<PlayerProjectile *> playerProjectiles;
+    std::mt19937 randomGenerator;
+    std::uniform_real_distribution<float> randomDistribution;
+    Enemy enemyTemplate;
+    std::list<Enemy *> enemies;
 
 public:
     Game(/* args */);

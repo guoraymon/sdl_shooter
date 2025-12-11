@@ -118,8 +118,35 @@ void Game::run()
             else
             {
                 SDL_Rect projectileRect = {static_cast<int>(projectile->position.x), static_cast<int>(projectile->position.y), projectile->width, projectile->height};
-                SDL_RenderCopy(renderer, projectile->texture, NULL, &projectileRect);
-                ++it;
+
+                bool isHit = false;
+                for (auto enemyIt = enemies.begin(); enemyIt != enemies.end();)
+                {
+                    auto enemy = *enemyIt;
+                    SDL_Rect enemyRect = {static_cast<int>(enemy->position.x), static_cast<int>(enemy->position.y), enemy->width, enemy->height};
+                    if (SDL_HasIntersection(&enemyRect, &projectileRect))
+                    {
+                        isHit = true;
+                        enemy->health -= projectile->damage;
+                        if (enemy->health <= 0)
+                        {
+                            delete enemy;
+                            enemyIt = enemies.erase(enemyIt);
+                        }
+                        delete projectile;
+                        it = playerProjectiles.erase(it);
+                        break;
+                    }
+                    else
+                    {
+                        ++enemyIt;
+                    }
+                }
+                if (!isHit)
+                {
+                    SDL_RenderCopy(renderer, projectile->texture, NULL, &projectileRect);
+                    ++it;
+                }
             }
         }
 
@@ -181,9 +208,23 @@ void Game::run()
             else
             {
                 SDL_Rect projectileRect = {static_cast<int>(projectile->position.x), static_cast<int>(projectile->position.y), projectile->width, projectile->height};
-                float angle = atan2f(projectile->direction.y, projectile->direction.x) * 180.0f / M_PI - 90.0f;
-                SDL_RenderCopyEx(renderer, projectile->texture, NULL, &projectileRect, angle, NULL, SDL_FLIP_NONE);
-                ++it;
+                auto playerRect = SDL_Rect{static_cast<int>(player.position.x), static_cast<int>(player.position.y), player.width, player.height};
+                if (SDL_HasIntersection(&playerRect, &projectileRect))
+                {
+                    player.health -= projectile->damage;
+                    if (player.health <= 0)
+                    {
+                        // Game over logic can be implemented here
+                    }
+                    delete projectile;
+                    it = enemyProjectiles.erase(it);
+                }
+                else
+                {
+                    float angle = atan2f(projectile->direction.y, projectile->direction.x) * 180.0f / M_PI - 90.0f;
+                    SDL_RenderCopyEx(renderer, projectile->texture, NULL, &projectileRect, angle, NULL, SDL_FLIP_NONE);
+                    ++it;
+                }
             }
         }
 

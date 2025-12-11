@@ -11,6 +11,7 @@ struct Player
     int speed = 200;
     Uint32 coolDown = 500;
     Uint32 lastShootTime = 0;
+    int health = 3;
 };
 
 struct PlayerProjectile
@@ -20,6 +21,7 @@ struct PlayerProjectile
     int width = 0;
     int height = 0;
     int speed = 400;
+    int damage = 1;
 };
 
 struct Enemy
@@ -31,6 +33,7 @@ struct Enemy
     int speed = 200;
     Uint32 coolDown = 1000;
     Uint32 lastShootTime = 0;
+    int health = 2;
 };
 
 struct EnemyProjectile
@@ -41,6 +44,7 @@ struct EnemyProjectile
     int height = 0;
     int speed = 400;
     SDL_FPoint direction = {0, 0};
+    int damage = 1;
 };
 
 #endif

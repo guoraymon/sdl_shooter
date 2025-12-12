@@ -14,7 +14,7 @@ private:
     int windowHeight = 667;
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
-    
+
     Player player;
     PlayerProjectile playerProjectileTemplate;
     std::list<PlayerProjectile *> playerProjectiles;
@@ -26,6 +26,9 @@ private:
     std::list<Enemy *> enemies;
     EnemyProjectile enemyProjectileTemplate;
     std::list<EnemyProjectile *> enemyProjectiles;
+
+    Explosion explosionTemplate;
+    std::list<Explosion *> explosions;
 
 public:
     Game(/* args */);

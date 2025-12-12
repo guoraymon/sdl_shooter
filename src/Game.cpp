@@ -70,6 +70,11 @@ void Game::init()
 
     enemyProjectileTemplate.texture = IMG_LoadTexture(renderer, "assets/image/bullet-1.png");
     SDL_QueryTexture(enemyProjectileTemplate.texture, NULL, NULL, &enemyProjectileTemplate.width, &enemyProjectileTemplate.height);
+
+    explosionTemplate.texture = IMG_LoadTexture(renderer, "assets/effect/explosion.png");
+    SDL_QueryTexture(explosionTemplate.texture, NULL, NULL, &explosionTemplate.width, &explosionTemplate.height);
+    explosionTemplate.frameCount = explosionTemplate.width / explosionTemplate.height;
+    explosionTemplate.width /= explosionTemplate.frameCount;
 }
 
 void Game::run()
@@ -130,6 +135,11 @@ void Game::run()
                         enemy->health -= projectile->damage;
                         if (enemy->health <= 0)
                         {
+                            auto explosion = new Explosion(explosionTemplate);
+                            explosion->position.x = enemy->position.x + enemy->width / 2 - explosion->width / 2;
+                            explosion->position.y = enemy->position.y + enemy->height / 2 - explosion->height / 2;
+                            explosion->lastFrameTime = SDL_GetTicks();
+                            explosions.push_back(explosion);
                             delete enemy;
                             enemyIt = enemies.erase(enemyIt);
                         }
@@ -225,6 +235,30 @@ void Game::run()
                     SDL_RenderCopyEx(renderer, projectile->texture, NULL, &projectileRect, angle, NULL, SDL_FLIP_NONE);
                     ++it;
                 }
+            }
+        }
+
+        // Update and render explosions
+        for (auto it = explosions.begin(); it != explosions.end();)
+        {
+            auto explosion = *it;
+            auto now = SDL_GetTicks();
+            if (now - explosion->lastFrameTime >= explosion->frameDuration)
+            {
+                explosion->currentFrame++;
+                explosion->lastFrameTime = now;
+            }
+            if (explosion->currentFrame >= explosion->frameCount)
+            {
+                delete explosion;
+                it = explosions.erase(it);
+            }
+            else
+            {
+                SDL_Rect srcRect = {explosion->currentFrame * explosion->width, 0, explosion->width, explosion->height};
+                SDL_Rect dstRect = {static_cast<int>(explosion->position.x), static_cast<int>(explosion->position.y), explosion->width, explosion->height};
+                SDL_RenderCopy(renderer, explosion->texture, &srcRect, &dstRect);
+                ++it;
             }
         }
 
@@ -328,6 +362,14 @@ void Game::clean()
     }
     playerProjectiles.clear();
     SDL_DestroyTexture(playerProjectileTemplate.texture);
+
+    // Clean up explosions
+    for (auto &explosion : explosions)
+    {
+        delete explosion;
+    }
+    explosions.clear();
+    SDL_DestroyTexture(explosionTemplate.texture);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

@@ -59,4 +59,20 @@ struct Explosion
     Uint32 lastFrameTime = 0;
 };
 
+struct Item
+{
+    SDL_Texture *texture = nullptr;
+    SDL_FPoint position = {0, 0};
+    int width = 0;
+    int height = 0;
+    int speed = 100;
+    SDL_FPoint direction = {0, 0};
+    int bounceCount = 3;
+    enum class ItemType
+    {
+        Health,
+        Shield,
+    } type;
+};
+
 #endif

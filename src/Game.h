@@ -30,6 +30,9 @@ private:
     Explosion explosionTemplate;
     std::list<Explosion *> explosions;
 
+    Item itemTemplate;
+    std::list<Item *> items;
+
 public:
     Game(/* args */);
     ~Game();

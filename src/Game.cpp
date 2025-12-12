@@ -75,6 +75,10 @@ void Game::init()
     SDL_QueryTexture(explosionTemplate.texture, NULL, NULL, &explosionTemplate.width, &explosionTemplate.height);
     explosionTemplate.frameCount = explosionTemplate.width / explosionTemplate.height;
     explosionTemplate.width /= explosionTemplate.frameCount;
+
+    // Load item texture
+    itemTemplate.texture = IMG_LoadTexture(renderer, "assets/image/bonus_life.png");
+    SDL_QueryTexture(itemTemplate.texture, NULL, NULL, &itemTemplate.width, &itemTemplate.height);
 }
 
 void Game::run()
@@ -140,6 +144,18 @@ void Game::run()
                             explosion->position.y = enemy->position.y + enemy->height / 2 - explosion->height / 2;
                             explosion->lastFrameTime = SDL_GetTicks();
                             explosions.push_back(explosion);
+                            // Drop item with 50% chance
+                            if (randomDistribution(randomGenerator) < 0.5f)
+                            {
+                                auto item = new Item(itemTemplate);
+                                item->position.x = enemy->position.x + enemy->width / 2 - item->width / 2;
+                                item->position.y = enemy->position.y + enemy->height / 2 - item->height / 2;
+                                // Random direction
+                                float angle = randomDistribution(randomGenerator) * 2.0f * M_PI;
+                                item->direction.x = cosf(angle);
+                                item->direction.y = sinf(angle);
+                                items.push_back(item);
+                            }
                             delete enemy;
                             enemyIt = enemies.erase(enemyIt);
                         }
@@ -262,6 +278,63 @@ void Game::run()
             }
         }
 
+        // Update and render items
+        for (auto it = items.begin(); it != items.end();)
+        {
+            auto item = *it;
+            item->position.x += item->direction.x * item->speed * deltaTime;
+            item->position.y += item->direction.y * item->speed * deltaTime;
+            // Bounce off the left wall
+            if (item->position.x < 0 && item->bounceCount > 0)
+            {
+                item->direction.x = -item->direction.x;
+                item->bounceCount--;
+            }
+            // Bounce off the right wall
+            if (item->position.x + item->width > windowWidth && item->bounceCount > 0)
+            {
+                item->direction.x = -item->direction.x;
+                item->bounceCount--;
+            }
+            // Bounce off the top wall
+            if (item->position.y < 0 && item->bounceCount > 0)
+            {
+                item->direction.y = -item->direction.y;
+                item->bounceCount--;
+            }
+            // Bounce off the bottom wall
+            if (item->position.y + item->height > windowHeight && item->bounceCount > 0)
+            {
+                item->direction.y = -item->direction.y;
+                item->bounceCount--;
+            }
+
+            if (item->position.x < -item->width ||
+                item->position.x > windowWidth ||
+                item->position.y < -item->height ||
+                item->position.y > windowHeight)
+            {
+                delete item;
+                it = items.erase(it);
+            }
+            else
+            {
+                SDL_Rect itemRect = {static_cast<int>(item->position.x), static_cast<int>(item->position.y), item->width, item->height};
+                auto playerRect = SDL_Rect{static_cast<int>(player.position.x), static_cast<int>(player.position.y), player.width, player.height};
+                if (SDL_HasIntersection(&playerRect, &itemRect))
+                {
+                    player.health += 1; // Increase player health
+                    delete item;
+                    it = items.erase(it);
+                }
+                else
+                {
+                    SDL_RenderCopy(renderer, item->texture, NULL, &itemRect);
+                    ++it;
+                }
+            }
+        }
+
         SDL_RenderPresent(renderer);
 
         auto frameEnd = SDL_GetTicks();
@@ -370,6 +443,14 @@ void Game::clean()
     }
     explosions.clear();
     SDL_DestroyTexture(explosionTemplate.texture);
+
+    // Clean up items
+    for (auto &item : items)
+    {
+        delete item;
+    }
+    items.clear();
+    SDL_DestroyTexture(itemTemplate.texture);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

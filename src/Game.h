@@ -2,8 +2,10 @@
 #define GAME_H
 
 #include <list>
+#include <map>
 #include <random>
 #include "SDL.h"
+#include "SDL_mixer.h"
 #include "Object.h"
 
 class Game
@@ -32,6 +34,9 @@ private:
 
     Item itemTemplate;
     std::list<Item *> items;
+
+    Mix_Music *music;
+    std::map<std::string, Mix_Chunk *> sounds;
 
 public:
     Game(/* args */);

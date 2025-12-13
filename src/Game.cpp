@@ -25,20 +25,18 @@ void Game::init()
     // Create renderer
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
+    // SDL_mixer init
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_mix Error: %s\n", SDL_GetError());
+    }
+
     // if (IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG) != (IMG_INIT_PNG | IMG_INIT_JPG))
     // {
     //     std::cerr << "IMG_Init Error: " << IMG_GetError() << std::endl;
     //     return 1;
     // }
     // SDL_Texture *texture = IMG_LoadTexture(renderer, "assets/image/bg.png");
-
-    // if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
-    // {
-    //     std::cerr << "Mix_OpenAudio Error: " << Mix_GetError() << std::endl;
-    //     return 1;
-    // }
-    // Mix_Music *music = Mix_LoadMUS("assets/music/03_Racing_Through_Through_Asteroids_Loop.ogg");
-    // Mix_PlayMusic(music, -1);
 
     // if (TTF_Init() != 0)
     // {
@@ -79,6 +77,18 @@ void Game::init()
     // Load item texture
     itemTemplate.texture = IMG_LoadTexture(renderer, "assets/image/bonus_life.png");
     SDL_QueryTexture(itemTemplate.texture, NULL, NULL, &itemTemplate.width, &itemTemplate.height);
+
+    // Load and play background music
+    music = Mix_LoadMUS("assets/music/03_Racing_Through_Asteroids_Loop.ogg");
+    Mix_PlayMusic(music, -1);
+
+    // Load sound effects
+    sounds["player_shoot"] = Mix_LoadWAV("assets/sound/laser_shoot4.wav");
+    sounds["enmey_shoot"] = Mix_LoadWAV("assets/sound/xs_laser.wav");
+    sounds["player_explosion"] = Mix_LoadWAV("assets/sound/explosion1.wav");
+    sounds["enemy_explosion"] = Mix_LoadWAV("assets/sound/explosion3.wav");
+    sounds["item_pickup"] = Mix_LoadWAV("assets/sound/eff5.wav");
+    sounds["hit"] = Mix_LoadWAV("assets/sound/eff11.wav");
 }
 
 void Game::run()
@@ -115,6 +125,7 @@ void Game::run()
         SDL_Rect playerRect = {static_cast<int>(player.position.x), static_cast<int>(player.position.y), player.width, player.height};
         SDL_RenderCopy(renderer, player.texture, NULL, &playerRect);
 
+        // Update and render player projectiles
         for (auto it = playerProjectiles.begin(); it != playerProjectiles.end();)
         {
             auto projectile = *it;
@@ -137,6 +148,8 @@ void Game::run()
                     {
                         isHit = true;
                         enemy->health -= projectile->damage;
+                        // play hit sound
+                        Mix_PlayChannel(-1, sounds["hit"], 0);
                         if (enemy->health <= 0)
                         {
                             auto explosion = new Explosion(explosionTemplate);
@@ -158,6 +171,8 @@ void Game::run()
                             }
                             delete enemy;
                             enemyIt = enemies.erase(enemyIt);
+                            // play enemy explosion sound
+                            Mix_PlayChannel(-1, sounds["enemy_explosion"], 0);
                         }
                         delete projectile;
                         it = playerProjectiles.erase(it);
@@ -203,6 +218,8 @@ void Game::run()
                     enemyProjectile->direction.y = dirY / length;
                     enemyProjectiles.push_back(enemyProjectile);
                     enemy->lastShootTime = now;
+                    // Play enemy shoot sound
+                    Mix_PlayChannel(-1, sounds["enmey_shoot"], 0);
                 }
                 SDL_Rect enemyRect = {static_cast<int>(enemy->position.x), static_cast<int>(enemy->position.y), enemy->width, enemy->height};
                 SDL_RenderCopy(renderer, enemy->texture, NULL, &enemyRect);
@@ -240,6 +257,8 @@ void Game::run()
                     player.health -= projectile->damage;
                     if (player.health <= 0)
                     {
+                        // play player explosion sound
+                        Mix_PlayChannel(-1, sounds["player_explosion"], 0);
                         // Game over logic can be implemented here
                     }
                     delete projectile;
@@ -326,6 +345,8 @@ void Game::run()
                     player.health += 1; // Increase player health
                     delete item;
                     it = items.erase(it);
+                    // Play item pickup sound
+                    Mix_PlayChannel(-1, sounds["item_pickup"], 0);
                 }
                 else
                 {
@@ -393,6 +414,8 @@ void Game::keyboardControll(float deltaTime)
             playerProjectile->position.y = player.position.y;
             playerProjectiles.push_back(playerProjectile);
             player.lastShootTime = now;
+            // Play shoot sound
+            Mix_PlayChannel(-1, sounds["player_shoot"], 0);
         }
     }
 }
@@ -451,6 +474,15 @@ void Game::clean()
     }
     items.clear();
     SDL_DestroyTexture(itemTemplate.texture);
+
+    // Clean up sounds
+    for (auto &pair : sounds)
+    {
+        Mix_FreeChunk(pair.second);
+    }
+    sounds.clear();
+    Mix_FreeMusic(music);
+    Mix_CloseAudio();
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

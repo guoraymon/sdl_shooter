@@ -72,6 +72,18 @@ void Game::init()
     itemTemplate.texture = IMG_LoadTexture(renderer, "assets/image/bonus_life.png");
     SDL_QueryTexture(itemTemplate.texture, NULL, NULL, &itemTemplate.width, &itemTemplate.height);
 
+    // Set up backgrounds
+    // near background
+    nearBackground.texture = IMG_LoadTexture(renderer, "assets/image/Stars-A.png");
+    nearBackground.width = windowWidth;
+    nearBackground.height = windowHeight;
+    nearBackground.speed = 50;
+    // far background
+    farBackground.texture = IMG_LoadTexture(renderer, "assets/image/Stars-B.png");
+    farBackground.width = windowWidth;
+    farBackground.height = windowHeight;
+    farBackground.speed = 20;
+
     // SDL_mixer init
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
     {
@@ -359,6 +371,27 @@ void Game::run()
             }
         }
 
+        // Render backgrounds
+        nearBackground.position.y += nearBackground.speed * deltaTime;
+        if (nearBackground.position.y >= nearBackground.height)
+        {
+            nearBackground.position.y = 0;
+        }
+        SDL_Rect nearRect1 = {0, static_cast<int>(nearBackground.position.y), nearBackground.width, nearBackground.height};
+        SDL_RenderCopy(renderer, nearBackground.texture, NULL, &nearRect1);
+        SDL_Rect nearRect2 = {0, static_cast<int>(nearBackground.position.y - nearBackground.height), windowWidth, nearBackground.height};
+        SDL_RenderCopy(renderer, nearBackground.texture, NULL, &nearRect2);
+
+        farBackground.position.y += farBackground.speed * deltaTime;
+        if (farBackground.position.y >= farBackground.height)
+        {
+            farBackground.position.y = 0;
+        }
+        SDL_Rect farRect1 = {0, static_cast<int>(farBackground.position.y), farBackground.width, farBackground.height};
+        SDL_RenderCopy(renderer, farBackground.texture, NULL, &farRect1);
+        SDL_Rect farRect2 = {0, static_cast<int>(farBackground.position.y - farBackground.height), farBackground.width, farBackground.height};
+        SDL_RenderCopy(renderer, farBackground.texture, NULL, &farRect2);
+
         SDL_RenderPresent(renderer);
 
         auto frameEnd = SDL_GetTicks();
@@ -477,6 +510,10 @@ void Game::clean()
     }
     items.clear();
     SDL_DestroyTexture(itemTemplate.texture);
+
+    // Clean up backgrounds
+    SDL_DestroyTexture(nearBackground.texture);
+    SDL_DestroyTexture(farBackground.texture);
 
     // Clean up sounds
     for (auto &pair : sounds)

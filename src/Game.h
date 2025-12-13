@@ -38,6 +38,9 @@ private:
     Mix_Music *music;
     std::map<std::string, Mix_Chunk *> sounds;
 
+    Background nearBackground;
+    Background farBackground;
+
 public:
     Game(/* args */);
     ~Game();

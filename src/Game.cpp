@@ -25,12 +25,6 @@ void Game::init()
     // Create renderer
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-    // SDL_mixer init
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
-    {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_mix Error: %s\n", SDL_GetError());
-    }
-
     // if (IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG) != (IMG_INIT_PNG | IMG_INIT_JPG))
     // {
     //     std::cerr << "IMG_Init Error: " << IMG_GetError() << std::endl;
@@ -77,6 +71,15 @@ void Game::init()
     // Load item texture
     itemTemplate.texture = IMG_LoadTexture(renderer, "assets/image/bonus_life.png");
     SDL_QueryTexture(itemTemplate.texture, NULL, NULL, &itemTemplate.width, &itemTemplate.height);
+
+    // SDL_mixer init
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_mix Error: %s\n", SDL_GetError());
+    }
+    Mix_AllocateChannels(32);
+    Mix_VolumeMusic(MIX_MAX_VOLUME / 4);
+    Mix_Volume(-1, MIX_MAX_VOLUME / 8);
 
     // Load and play background music
     music = Mix_LoadMUS("assets/music/03_Racing_Through_Asteroids_Loop.ogg");

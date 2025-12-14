@@ -1,3 +1,4 @@
 .vscode
 build
 SDLShooter-*
+.DS_Store

@@ -12,6 +12,7 @@ struct Player
     Uint32 coolDown = 500;
     Uint32 lastShootTime = 0;
     int health = 3;
+    int maxHealth = 3;
 };
 
 struct PlayerProjectile

@@ -41,6 +41,8 @@ private:
     Background nearBackground;
     Background farBackground;
 
+    SDL_Texture *healthTexture;
+
 public:
     Game(/* args */);
     ~Game();

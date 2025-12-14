@@ -84,6 +84,9 @@ void Game::init()
     farBackground.height = windowHeight;
     farBackground.speed = 20;
 
+    // Load health texture
+    healthTexture = IMG_LoadTexture(renderer, "assets/image/Health UI Black.png");
+
     // SDL_mixer init
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
     {
@@ -392,6 +395,20 @@ void Game::run()
         SDL_Rect farRect2 = {0, static_cast<int>(farBackground.position.y - farBackground.height), farBackground.width, farBackground.height};
         SDL_RenderCopy(renderer, farBackground.texture, NULL, &farRect2);
 
+        // Render player health
+        SDL_SetTextureColorMod(healthTexture, 255, 255, 255);
+        for (int i = 0; i < player.health; ++i)
+        {
+            SDL_Rect healthRect = {10 + i * (32 + 5), 10, 32, 32};
+            SDL_RenderCopy(renderer, healthTexture, NULL, &healthRect);
+        }
+        SDL_SetTextureColorMod(healthTexture, 100, 100, 100);
+        for (int i = player.health; i < player.maxHealth; ++i)
+        {
+            SDL_Rect healthRect = {10 + i * (32 + 5), 10, 32, 32};
+            SDL_RenderCopy(renderer, healthTexture, NULL, &healthRect);
+        }
+
         SDL_RenderPresent(renderer);
 
         auto frameEnd = SDL_GetTicks();
@@ -514,6 +531,9 @@ void Game::clean()
     // Clean up backgrounds
     SDL_DestroyTexture(nearBackground.texture);
     SDL_DestroyTexture(farBackground.texture);
+
+    // Clean up health texture
+    SDL_DestroyTexture(healthTexture);
 
     // Clean up sounds
     for (auto &pair : sounds)

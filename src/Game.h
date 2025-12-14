@@ -6,6 +6,7 @@
 #include <random>
 #include "SDL.h"
 #include "SDL_mixer.h"
+#include "SDL_ttf.h"
 #include "Object.h"
 
 class Game
@@ -42,6 +43,9 @@ private:
     Background farBackground;
 
     SDL_Texture *healthTexture;
+
+    TTF_Font *scoreFont;
+    int score = 0;
 
 public:
     Game(/* args */);

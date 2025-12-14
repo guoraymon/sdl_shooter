@@ -32,16 +32,6 @@ void Game::init()
     // }
     // SDL_Texture *texture = IMG_LoadTexture(renderer, "assets/image/bg.png");
 
-    // if (TTF_Init() != 0)
-    // {
-    //     std::cerr << "TTF_Init Error: " << TTF_GetError() << std::endl;
-    //     return 1;
-    // }
-    // TTF_Font *font = TTF_OpenFont("assets/font/VonwaonBitmap-16px.ttf", 24);
-    // SDL_Color color = {255, 255, 255, 255};
-    // SDL_Surface *surface = TTF_RenderUTF8_Solid(font, "你好, SDL!", color);
-    // SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, surface);
-
     player.texture = IMG_LoadTexture(renderer, "assets/image/SpaceShip.png");
     SDL_QueryTexture(player.texture, NULL, NULL, &player.width, &player.height);
     player.width /= 3;
@@ -107,6 +97,14 @@ void Game::init()
     sounds["enemy_explosion"] = Mix_LoadWAV("assets/sound/explosion3.wav");
     sounds["item_pickup"] = Mix_LoadWAV("assets/sound/eff5.wav");
     sounds["hit"] = Mix_LoadWAV("assets/sound/eff11.wav");
+
+    // SDL_ttf init
+    if (TTF_Init() != 0)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_ttf Error: %s\n", SDL_GetError());
+    }
+    // Load font for score display
+    scoreFont = TTF_OpenFont("assets/font/VonwaonBitmap-12px.ttf", 24);
 }
 
 void Game::run()
@@ -187,6 +185,7 @@ void Game::run()
                                 item->direction.y = sinf(angle);
                                 items.push_back(item);
                             }
+                            score += 10;
                             delete enemy;
                             enemyIt = enemies.erase(enemyIt);
                             // play enemy explosion sound
@@ -409,6 +408,16 @@ void Game::run()
             SDL_RenderCopy(renderer, healthTexture, NULL, &healthRect);
         }
 
+        // Render score
+        SDL_Color white = {255, 255, 255, 255};
+        std::string scoreText = "Score: " + std::to_string(score);
+        SDL_Surface *scoreSurface = TTF_RenderUTF8_Solid(scoreFont, scoreText.c_str(), white);
+        SDL_Texture *scoreTexture = SDL_CreateTextureFromSurface(renderer, scoreSurface);
+        SDL_Rect scoreRect = {windowWidth - scoreSurface->w - 10, 10, scoreSurface->w, scoreSurface->h};
+        SDL_RenderCopy(renderer, scoreTexture, NULL, &scoreRect);
+        SDL_FreeSurface(scoreSurface);
+        SDL_DestroyTexture(scoreTexture);
+
         SDL_RenderPresent(renderer);
 
         auto frameEnd = SDL_GetTicks();
@@ -543,6 +552,9 @@ void Game::clean()
     sounds.clear();
     Mix_FreeMusic(music);
     Mix_CloseAudio();
+
+    // Clean up score font
+    TTF_CloseFont(scoreFont);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

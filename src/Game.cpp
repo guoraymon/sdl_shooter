@@ -92,7 +92,7 @@ void Game::init()
 
     // Load sound effects
     sounds["player_shoot"] = Mix_LoadWAV("assets/sound/laser_shoot4.wav");
-    sounds["enmey_shoot"] = Mix_LoadWAV("assets/sound/xs_laser.wav");
+    sounds["enemy_shoot"] = Mix_LoadWAV("assets/sound/xs_laser.wav");
     sounds["player_explosion"] = Mix_LoadWAV("assets/sound/explosion1.wav");
     sounds["enemy_explosion"] = Mix_LoadWAV("assets/sound/explosion3.wav");
     sounds["item_pickup"] = Mix_LoadWAV("assets/sound/eff5.wav");
@@ -123,7 +123,7 @@ void Game::run()
             }
         }
 
-        keyboardControll(deltaTime);
+        keyboardController(deltaTime);
 
         SDL_RenderClear(renderer);
 
@@ -236,7 +236,7 @@ void Game::run()
                     enemyProjectiles.push_back(enemyProjectile);
                     enemy->lastShootTime = now;
                     // Play enemy shoot sound
-                    Mix_PlayChannel(-1, sounds["enmey_shoot"], 0);
+                    Mix_PlayChannel(-1, sounds["enemy_shoot"], 0);
                 }
                 SDL_Rect enemyRect = {static_cast<int>(enemy->position.x), static_cast<int>(enemy->position.y), enemy->width, enemy->height};
                 SDL_RenderCopy(renderer, enemy->texture, NULL, &enemyRect);
@@ -434,7 +434,7 @@ void Game::run()
     }
 }
 
-void Game::keyboardControll(float deltaTime)
+void Game::keyboardController(float deltaTime)
 {
     auto keyboardState = SDL_GetKeyboardState(NULL);
     if (keyboardState[SDL_SCANCODE_W])

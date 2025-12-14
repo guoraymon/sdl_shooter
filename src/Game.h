@@ -52,7 +52,7 @@ public:
     ~Game();
     void init();
     void run();
-    void keyboardControll(float deltaTime);
+    void keyboardController(float deltaTime);
     void clean();
 };
 

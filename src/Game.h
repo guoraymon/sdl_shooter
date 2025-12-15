@@ -34,6 +34,7 @@ public:
     int getWindowWidth() { return windowWidth; }
     int getWindowHeight() { return windowHeight; }
     Uint32 getFrameTime() { return frameTime; }
+    void changeScene(Scene *newScene);
 };
 
 #endif

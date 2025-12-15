@@ -9,7 +9,6 @@
 #include "Scene.h"
 #include "Object.h"
 
-
 class MainScene : public Scene
 {
 private:
@@ -45,7 +44,8 @@ private:
 public:
     MainScene(Game &game) : Scene(game) {}
     virtual void init() override;
-    virtual void run() override;
+    virtual void run(float deltaTime) override;
     virtual void clean() override;
+    virtual void handleEvent(SDL_Event *event) override;
     void keyboardController(float deltaTime);
 };

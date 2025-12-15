@@ -25,8 +25,15 @@ add_executable(
     "src/main.cpp"
     "src/Game.cpp"
     "src/Scene.cpp"
+    "src/TitleScene.cpp"
     "src/MainScene.cpp"
 )
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    target_compile_options(SDLShooter-Darwin PUBLIC -fsanitize=address -g)
+    target_link_options(SDLShooter-Darwin PUBLIC -fsanitize=address)
+endif()
+
 
 target_link_libraries(
     ${TARGET}

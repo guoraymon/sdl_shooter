@@ -3,7 +3,7 @@
 
 #include "Game.h"
 #include "Object.h"
-#include "MainScene.h"
+#include "TitleScene.h"
 
 Game::Game()
 {
@@ -46,19 +46,64 @@ void Game::init()
     // Create renderer
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-    currentScene = new MainScene(*this);
-    currentScene->init();
+    changeScene(new TitleScene(*this));
 }
 
 void Game::run()
 {
-    currentScene->run();
+    float deltaTime = 0;
+    while (true)
+    {
+        auto frameStart = SDL_GetTicks();
+
+        SDL_Event event;
+        if (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+            {
+                break;
+            }
+            currentScene->handleEvent(&event);
+        }
+
+        SDL_RenderClear(renderer);
+
+        currentScene->run(deltaTime);
+
+        SDL_RenderPresent(renderer);
+
+        auto frameEnd = SDL_GetTicks();
+        auto diff = frameEnd - frameStart;
+        if (diff < getFrameTime())
+        {
+            SDL_Delay(getFrameTime() - diff);
+            deltaTime = getFrameTime() / 1000.0f;
+        }
+        else
+        {
+            deltaTime = diff / 1000.0f;
+        }
+    }
+}
+
+void Game::changeScene(Scene *newScene)
+{
+    if (currentScene != nullptr)
+    {
+        currentScene->clean();
+        delete currentScene;
+    }
+    currentScene = newScene;
+    currentScene->init();
 }
 
 void Game::clean()
 {
-    currentScene->clean();
-    Mix_CloseAudio();
+    if (currentScene != nullptr)
+    {
+        currentScene->clean();
+        delete currentScene;
+    }
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

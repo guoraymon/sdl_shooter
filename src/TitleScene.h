@@ -1,5 +1,4 @@
 #include "SDL_mixer.h"
-#include "SDL_ttf.h"
 
 #include "Scene.h"
 
@@ -7,9 +6,6 @@ class TitleScene : public Scene
 {
 private:
     Mix_Music *music;
-
-    TTF_Font *titleFont;
-    TTF_Font *textFont;
 
 public:
     TitleScene(Game &game) : Scene(game) {}

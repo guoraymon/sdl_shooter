@@ -46,6 +46,9 @@ void Game::init()
     // Create renderer
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
+    titleFont = TTF_OpenFont("assets/font/VonwaonBitmap-16px.ttf", 64);
+    textFont = TTF_OpenFont("assets/font/VonwaonBitmap-16px.ttf", 32);
+
     changeScene(new TitleScene(*this));
 }
 
@@ -97,6 +100,19 @@ void Game::changeScene(Scene *newScene)
     currentScene->init();
 }
 
+void Game::renderText(const std::string &text, int y, bool isTitle, bool isCenter)
+{
+    TTF_Font *font = isTitle ? titleFont : textFont;
+    SDL_Color color = {255, 255, 255, 255};
+    SDL_Surface *textSurface = TTF_RenderUTF8_Solid(font, text.c_str(), color);
+    SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    int x = isCenter ? (windowWidth - textSurface->w) / 2 : 0;
+    SDL_Rect textRect = {x, y, textSurface->w, textSurface->h};
+    SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(textTexture);
+}
+
 void Game::clean()
 {
     if (currentScene != nullptr)
@@ -104,6 +120,9 @@ void Game::clean()
         currentScene->clean();
         delete currentScene;
     }
+
+    TTF_CloseFont(titleFont);
+    TTF_CloseFont(textFont);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

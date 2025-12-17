@@ -22,6 +22,9 @@ private:
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
 
+    TTF_Font *titleFont;
+    TTF_Font *textFont;
+
     Scene *currentScene = nullptr;
 
 public:
@@ -34,6 +37,7 @@ public:
     int getWindowWidth() { return windowWidth; }
     int getWindowHeight() { return windowHeight; }
     Uint32 getFrameTime() { return frameTime; }
+    void renderText(const std::string &text, int y, bool isTitle = false, bool isCenter = false);
     void changeScene(Scene *newScene);
 };
 

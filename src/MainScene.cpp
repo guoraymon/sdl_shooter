@@ -2,6 +2,7 @@
 
 #include "MainScene.h"
 #include "TitleScene.h"
+#include "EndScene.h"
 #include "Game.h"
 
 void MainScene::init()
@@ -72,72 +73,75 @@ void MainScene::run(float deltaTime)
     keyboardController(deltaTime);
 
     // Render player
-    SDL_Rect playerRect = {static_cast<int>(player.position.x), static_cast<int>(player.position.y), player.width, player.height};
-    SDL_RenderCopy(game.getRenderer(), player.texture, NULL, &playerRect);
-
-    // Update and render player projectiles
-    for (auto it = playerProjectiles.begin(); it != playerProjectiles.end();)
+    if (player.health > 0)
     {
-        auto projectile = *it;
-        projectile->position.y -= projectile->speed * deltaTime;
-        if (projectile->position.y < -projectile->height)
-        {
-            delete projectile;
-            it = playerProjectiles.erase(it);
-        }
-        else
-        {
-            SDL_Rect projectileRect = {static_cast<int>(projectile->position.x), static_cast<int>(projectile->position.y), projectile->width, projectile->height};
+        SDL_Rect playerRect = {static_cast<int>(player.position.x), static_cast<int>(player.position.y), player.width, player.height};
+        SDL_RenderCopy(game.getRenderer(), player.texture, NULL, &playerRect);
 
-            bool isHit = false;
-            for (auto enemyIt = enemies.begin(); enemyIt != enemies.end();)
+        // Update and render player projectiles
+        for (auto it = playerProjectiles.begin(); it != playerProjectiles.end();)
+        {
+            auto projectile = *it;
+            projectile->position.y -= projectile->speed * deltaTime;
+            if (projectile->position.y < -projectile->height)
             {
-                auto enemy = *enemyIt;
-                SDL_Rect enemyRect = {static_cast<int>(enemy->position.x), static_cast<int>(enemy->position.y), enemy->width, enemy->height};
-                if (SDL_HasIntersection(&enemyRect, &projectileRect))
-                {
-                    isHit = true;
-                    enemy->health -= projectile->damage;
-                    // play hit sound
-                    Mix_PlayChannel(-1, sounds["hit"], 0);
-                    if (enemy->health <= 0)
-                    {
-                        auto explosion = new Explosion(explosionTemplate);
-                        explosion->position.x = enemy->position.x + enemy->width / 2 - explosion->width / 2;
-                        explosion->position.y = enemy->position.y + enemy->height / 2 - explosion->height / 2;
-                        explosion->lastFrameTime = SDL_GetTicks();
-                        explosions.push_back(explosion);
-                        // Drop item with 50% chance
-                        if (randomDistribution(randomGenerator) < 0.5f)
-                        {
-                            auto item = new Item(itemTemplate);
-                            item->position.x = enemy->position.x + enemy->width / 2 - item->width / 2;
-                            item->position.y = enemy->position.y + enemy->height / 2 - item->height / 2;
-                            // Random direction
-                            float angle = randomDistribution(randomGenerator) * 2.0f * M_PI;
-                            item->direction.x = cosf(angle);
-                            item->direction.y = sinf(angle);
-                            items.push_back(item);
-                        }
-                        score += 10;
-                        delete enemy;
-                        enemyIt = enemies.erase(enemyIt);
-                        // play enemy explosion sound
-                        Mix_PlayChannel(-1, sounds["enemy_explosion"], 0);
-                    }
-                    delete projectile;
-                    it = playerProjectiles.erase(it);
-                    break;
-                }
-                else
-                {
-                    ++enemyIt;
-                }
+                delete projectile;
+                it = playerProjectiles.erase(it);
             }
-            if (!isHit)
+            else
             {
-                SDL_RenderCopy(game.getRenderer(), projectile->texture, NULL, &projectileRect);
-                ++it;
+                SDL_Rect projectileRect = {static_cast<int>(projectile->position.x), static_cast<int>(projectile->position.y), projectile->width, projectile->height};
+
+                bool isHit = false;
+                for (auto enemyIt = enemies.begin(); enemyIt != enemies.end();)
+                {
+                    auto enemy = *enemyIt;
+                    SDL_Rect enemyRect = {static_cast<int>(enemy->position.x), static_cast<int>(enemy->position.y), enemy->width, enemy->height};
+                    if (SDL_HasIntersection(&enemyRect, &projectileRect))
+                    {
+                        isHit = true;
+                        enemy->health -= projectile->damage;
+                        // play hit sound
+                        Mix_PlayChannel(-1, sounds["hit"], 0);
+                        if (enemy->health <= 0)
+                        {
+                            auto explosion = new Explosion(explosionTemplate);
+                            explosion->position.x = enemy->position.x + enemy->width / 2 - explosion->width / 2;
+                            explosion->position.y = enemy->position.y + enemy->height / 2 - explosion->height / 2;
+                            explosion->lastFrameTime = SDL_GetTicks();
+                            explosions.push_back(explosion);
+                            // Drop item with 50% chance
+                            if (randomDistribution(randomGenerator) < 0.5f)
+                            {
+                                auto item = new Item(itemTemplate);
+                                item->position.x = enemy->position.x + enemy->width / 2 - item->width / 2;
+                                item->position.y = enemy->position.y + enemy->height / 2 - item->height / 2;
+                                // Random direction
+                                float angle = randomDistribution(randomGenerator) * 2.0f * M_PI;
+                                item->direction.x = cosf(angle);
+                                item->direction.y = sinf(angle);
+                                items.push_back(item);
+                            }
+                            score += 10;
+                            delete enemy;
+                            enemyIt = enemies.erase(enemyIt);
+                            // play enemy explosion sound
+                            Mix_PlayChannel(-1, sounds["enemy_explosion"], 0);
+                        }
+                        delete projectile;
+                        it = playerProjectiles.erase(it);
+                        break;
+                    }
+                    else
+                    {
+                        ++enemyIt;
+                    }
+                }
+                if (!isHit)
+                {
+                    SDL_RenderCopy(game.getRenderer(), projectile->texture, NULL, &projectileRect);
+                    ++it;
+                }
             }
         }
     }
@@ -154,155 +158,162 @@ void MainScene::run(float deltaTime)
         }
         else
         {
-            // Enemy shooting
-            auto now = SDL_GetTicks();
-            if (enemy->lastShootTime + enemy->coolDown <= now)
+            if (player.health > 0)
             {
-                auto enemyProjectile = new EnemyProjectile(enemyProjectileTemplate);
-                enemyProjectile->position.x = enemy->position.x + enemy->width / 2 - enemyProjectile->width / 2;
-                enemyProjectile->position.y = enemy->position.y + enemy->height;
-                // direction towards player
-                float dirX = (player.position.x + player.width / 2) - (enemy->position.x + enemy->width / 2);
-                float dirY = (player.position.y + player.height / 2) - (enemy->position.y + enemy->height / 2);
-                float length = sqrtf(dirX * dirX + dirY * dirY);
-                enemyProjectile->direction.x = dirX / length;
-                enemyProjectile->direction.y = dirY / length;
-                enemyProjectiles.push_back(enemyProjectile);
-                enemy->lastShootTime = now;
-                // Play enemy shoot sound
-                Mix_PlayChannel(-1, sounds["enemy_shoot"], 0);
+                // Enemy shooting
+                auto now = SDL_GetTicks();
+                if (enemy->lastShootTime + enemy->coolDown <= now)
+                {
+                    auto enemyProjectile = new EnemyProjectile(enemyProjectileTemplate);
+                    enemyProjectile->position.x = enemy->position.x + enemy->width / 2 - enemyProjectile->width / 2;
+                    enemyProjectile->position.y = enemy->position.y + enemy->height;
+                    // direction towards player
+                    float dirX = (player.position.x + player.width / 2) - (enemy->position.x + enemy->width / 2);
+                    float dirY = (player.position.y + player.height / 2) - (enemy->position.y + enemy->height / 2);
+                    float length = sqrtf(dirX * dirX + dirY * dirY);
+                    enemyProjectile->direction.x = dirX / length;
+                    enemyProjectile->direction.y = dirY / length;
+                    enemyProjectiles.push_back(enemyProjectile);
+                    enemy->lastShootTime = now;
+                    // Play enemy shoot sound
+                    Mix_PlayChannel(-1, sounds["enemy_shoot"], 0);
+                }
             }
             SDL_Rect enemyRect = {static_cast<int>(enemy->position.x), static_cast<int>(enemy->position.y), enemy->width, enemy->height};
             SDL_RenderCopy(game.getRenderer(), enemy->texture, NULL, &enemyRect);
             ++it;
         }
     }
-    // Spawn enemies
-    if (randomDistribution(randomGenerator) < 0.02f)
+
+    if (player.health > 0)
     {
-        auto enemy = new Enemy(enemyTemplate);
-        enemy->position.x = randomDistribution(randomGenerator) * (game.getWindowWidth() - enemy->width);
-        enemy->position.y = -enemy->height;
-        enemies.push_back(enemy);
-    }
-    // Update and render enemy projectiles
-    for (auto it = enemyProjectiles.begin(); it != enemyProjectiles.end();)
-    {
-        auto projectile = *it;
-        projectile->position.x += projectile->direction.x * projectile->speed * deltaTime;
-        projectile->position.y += projectile->direction.y * projectile->speed * deltaTime;
-        if (projectile->position.x < -projectile->width ||
-            projectile->position.x > game.getWindowWidth() ||
-            projectile->position.y < -projectile->height ||
-            projectile->position.y > game.getWindowHeight())
+        // Spawn enemies
+        if (randomDistribution(randomGenerator) < 0.02f)
         {
-            delete projectile;
-            it = enemyProjectiles.erase(it);
+            auto enemy = new Enemy(enemyTemplate);
+            enemy->position.x = randomDistribution(randomGenerator) * (game.getWindowWidth() - enemy->width);
+            enemy->position.y = -enemy->height;
+            enemies.push_back(enemy);
         }
-        else
+        // Update and render enemy projectiles
+        for (auto it = enemyProjectiles.begin(); it != enemyProjectiles.end();)
         {
-            SDL_Rect projectileRect = {static_cast<int>(projectile->position.x), static_cast<int>(projectile->position.y), projectile->width, projectile->height};
-            auto playerRect = SDL_Rect{static_cast<int>(player.position.x), static_cast<int>(player.position.y), player.width, player.height};
-            if (SDL_HasIntersection(&playerRect, &projectileRect))
+            auto projectile = *it;
+            projectile->position.x += projectile->direction.x * projectile->speed * deltaTime;
+            projectile->position.y += projectile->direction.y * projectile->speed * deltaTime;
+            if (projectile->position.x < -projectile->width ||
+                projectile->position.x > game.getWindowWidth() ||
+                projectile->position.y < -projectile->height ||
+                projectile->position.y > game.getWindowHeight())
             {
-                player.health -= projectile->damage;
-                if (player.health <= 0)
-                {
-                    // play player explosion sound
-                    Mix_PlayChannel(-1, sounds["player_explosion"], 0);
-                    // Game over logic can be implemented here
-                }
                 delete projectile;
                 it = enemyProjectiles.erase(it);
             }
             else
             {
-                float angle = atan2f(projectile->direction.y, projectile->direction.x) * 180.0f / M_PI - 90.0f;
-                SDL_RenderCopyEx(game.getRenderer(), projectile->texture, NULL, &projectileRect, angle, NULL, SDL_FLIP_NONE);
-                ++it;
+                SDL_Rect projectileRect = {static_cast<int>(projectile->position.x), static_cast<int>(projectile->position.y), projectile->width, projectile->height};
+                auto playerRect = SDL_Rect{static_cast<int>(player.position.x), static_cast<int>(player.position.y), player.width, player.height};
+                if (SDL_HasIntersection(&playerRect, &projectileRect))
+                {
+                    player.health -= projectile->damage;
+                    if (player.health <= 0)
+                    {
+                        Mix_PlayChannel(-1, sounds["player_explosion"], 0);
+                        endTime = SDL_GetTicks();
+                        return;
+                    }
+                    delete projectile;
+                    it = enemyProjectiles.erase(it);
+                }
+                else
+                {
+                    float angle = atan2f(projectile->direction.y, projectile->direction.x) * 180.0f / M_PI - 90.0f;
+                    SDL_RenderCopyEx(game.getRenderer(), projectile->texture, NULL, &projectileRect, angle, NULL, SDL_FLIP_NONE);
+                    ++it;
+                }
             }
         }
-    }
 
-    // Update and render explosions
-    for (auto it = explosions.begin(); it != explosions.end();)
-    {
-        auto explosion = *it;
-        auto now = SDL_GetTicks();
-        if (now - explosion->lastFrameTime >= explosion->frameDuration)
+        // Update and render explosions
+        for (auto it = explosions.begin(); it != explosions.end();)
         {
-            explosion->currentFrame++;
-            explosion->lastFrameTime = now;
-        }
-        if (explosion->currentFrame >= explosion->frameCount)
-        {
-            delete explosion;
-            it = explosions.erase(it);
-        }
-        else
-        {
-            SDL_Rect srcRect = {explosion->currentFrame * explosion->width, 0, explosion->width, explosion->height};
-            SDL_Rect dstRect = {static_cast<int>(explosion->position.x), static_cast<int>(explosion->position.y), explosion->width, explosion->height};
-            SDL_RenderCopy(game.getRenderer(), explosion->texture, &srcRect, &dstRect);
-            ++it;
-        }
-    }
-
-    // Update and render items
-    for (auto it = items.begin(); it != items.end();)
-    {
-        auto item = *it;
-        item->position.x += item->direction.x * item->speed * deltaTime;
-        item->position.y += item->direction.y * item->speed * deltaTime;
-        // Bounce off the left wall
-        if (item->position.x < 0 && item->bounceCount > 0)
-        {
-            item->direction.x = -item->direction.x;
-            item->bounceCount--;
-        }
-        // Bounce off the right wall
-        if (item->position.x + item->width > game.getWindowWidth() && item->bounceCount > 0)
-        {
-            item->direction.x = -item->direction.x;
-            item->bounceCount--;
-        }
-        // Bounce off the top wall
-        if (item->position.y < 0 && item->bounceCount > 0)
-        {
-            item->direction.y = -item->direction.y;
-            item->bounceCount--;
-        }
-        // Bounce off the bottom wall
-        if (item->position.y + item->height > game.getWindowHeight() && item->bounceCount > 0)
-        {
-            item->direction.y = -item->direction.y;
-            item->bounceCount--;
-        }
-
-        if (item->position.x < -item->width ||
-            item->position.x > game.getWindowWidth() ||
-            item->position.y < -item->height ||
-            item->position.y > game.getWindowHeight())
-        {
-            delete item;
-            it = items.erase(it);
-        }
-        else
-        {
-            SDL_Rect itemRect = {static_cast<int>(item->position.x), static_cast<int>(item->position.y), item->width, item->height};
-            auto playerRect = SDL_Rect{static_cast<int>(player.position.x), static_cast<int>(player.position.y), player.width, player.height};
-            if (SDL_HasIntersection(&playerRect, &itemRect))
+            auto explosion = *it;
+            auto now = SDL_GetTicks();
+            if (now - explosion->lastFrameTime >= explosion->frameDuration)
             {
-                player.health += 1; // Increase player health
-                delete item;
-                it = items.erase(it);
-                // Play item pickup sound
-                Mix_PlayChannel(-1, sounds["item_pickup"], 0);
+                explosion->currentFrame++;
+                explosion->lastFrameTime = now;
+            }
+            if (explosion->currentFrame >= explosion->frameCount)
+            {
+                delete explosion;
+                it = explosions.erase(it);
             }
             else
             {
-                SDL_RenderCopy(game.getRenderer(), item->texture, NULL, &itemRect);
+                SDL_Rect srcRect = {explosion->currentFrame * explosion->width, 0, explosion->width, explosion->height};
+                SDL_Rect dstRect = {static_cast<int>(explosion->position.x), static_cast<int>(explosion->position.y), explosion->width, explosion->height};
+                SDL_RenderCopy(game.getRenderer(), explosion->texture, &srcRect, &dstRect);
                 ++it;
+            }
+        }
+
+        // Update and render items
+        for (auto it = items.begin(); it != items.end();)
+        {
+            auto item = *it;
+            item->position.x += item->direction.x * item->speed * deltaTime;
+            item->position.y += item->direction.y * item->speed * deltaTime;
+            // Bounce off the left wall
+            if (item->position.x < 0 && item->bounceCount > 0)
+            {
+                item->direction.x = -item->direction.x;
+                item->bounceCount--;
+            }
+            // Bounce off the right wall
+            if (item->position.x + item->width > game.getWindowWidth() && item->bounceCount > 0)
+            {
+                item->direction.x = -item->direction.x;
+                item->bounceCount--;
+            }
+            // Bounce off the top wall
+            if (item->position.y < 0 && item->bounceCount > 0)
+            {
+                item->direction.y = -item->direction.y;
+                item->bounceCount--;
+            }
+            // Bounce off the bottom wall
+            if (item->position.y + item->height > game.getWindowHeight() && item->bounceCount > 0)
+            {
+                item->direction.y = -item->direction.y;
+                item->bounceCount--;
+            }
+
+            if (item->position.x < -item->width ||
+                item->position.x > game.getWindowWidth() ||
+                item->position.y < -item->height ||
+                item->position.y > game.getWindowHeight())
+            {
+                delete item;
+                it = items.erase(it);
+            }
+            else
+            {
+                SDL_Rect itemRect = {static_cast<int>(item->position.x), static_cast<int>(item->position.y), item->width, item->height};
+                auto playerRect = SDL_Rect{static_cast<int>(player.position.x), static_cast<int>(player.position.y), player.width, player.height};
+                if (SDL_HasIntersection(&playerRect, &itemRect))
+                {
+                    player.health += 1; // Increase player health
+                    delete item;
+                    it = items.erase(it);
+                    // Play item pickup sound
+                    Mix_PlayChannel(-1, sounds["item_pickup"], 0);
+                }
+                else
+                {
+                    SDL_RenderCopy(game.getRenderer(), item->texture, NULL, &itemRect);
+                    ++it;
+                }
             }
         }
     }
@@ -351,6 +362,18 @@ void MainScene::run(float deltaTime)
     SDL_RenderCopy(game.getRenderer(), scoreTexture, NULL, &scoreRect);
     SDL_FreeSurface(scoreSurface);
     SDL_DestroyTexture(scoreTexture);
+
+    // Check for game over
+    if (player.health <= 0)
+    {
+        auto now = SDL_GetTicks();
+        if (now - endTime >= endDelay)
+        {
+            auto endScene = new EndScene(game);
+            game.changeScene(endScene);
+            return;
+        }
+    }
 }
 
 void MainScene::handleEvent(SDL_Event *event)

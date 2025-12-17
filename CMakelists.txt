@@ -27,6 +27,7 @@ add_executable(
     "src/Scene.cpp"
     "src/TitleScene.cpp"
     "src/MainScene.cpp"
+    "src/EndScene.cpp"
 )
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")

@@ -41,6 +41,9 @@ private:
     TTF_Font *scoreFont;
     int score = 0;
 
+    Uint32 endTime = 0;
+    Uint32 endDelay = 3000; // milliseconds
+
 public:
     MainScene(Game &game) : Scene(game) {}
     virtual void init() override;

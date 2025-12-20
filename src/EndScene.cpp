@@ -38,6 +38,15 @@ void EndScene::handleEvent(SDL_Event *event)
         {
             if (event->key.keysym.sym == SDLK_BACKSPACE && !name.empty())
             {
+                auto last_char = name.back();
+                if ((last_char & 0b10000000) == 0b10000000)
+                {
+                    name.pop_back();
+                    while ((name.back() & 0b11000000) != 0b11000000)
+                    {
+                        name.pop_back();
+                    }
+                }
                 name.pop_back();
             }
             else if (event->key.keysym.sym == SDLK_RETURN || event->key.keysym.sym == SDLK_KP_ENTER)

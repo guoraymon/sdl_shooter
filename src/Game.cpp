@@ -100,7 +100,7 @@ void Game::changeScene(Scene *newScene)
     currentScene->init();
 }
 
-void Game::renderText(const std::string &text, int y, bool isTitle, bool isCenter)
+SDL_Point Game::renderText(std::string text, int y, bool isTitle, bool isCenter)
 {
     TTF_Font *font = isTitle ? titleFont : textFont;
     SDL_Color color = {255, 255, 255, 255};
@@ -111,6 +111,20 @@ void Game::renderText(const std::string &text, int y, bool isTitle, bool isCente
     SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
+    return SDL_Point{textRect.x + textRect.w, y};
+}
+
+SDL_Point Game::renderTextPos(std::string text, int x, int y, bool isTitle)
+{
+    TTF_Font *font = isTitle ? titleFont : textFont;
+    SDL_Color color = {255, 255, 255, 255};
+    SDL_Surface *textSurface = TTF_RenderUTF8_Solid(font, text.c_str(), color);
+    SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    SDL_Rect textRect = {x, y, textSurface->w, textSurface->h};
+    SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(textTexture);
+    return SDL_Point{textRect.x + textRect.w, y};
 }
 
 void Game::setFinalScore(int score)

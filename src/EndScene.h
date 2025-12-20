@@ -7,6 +7,7 @@ class EndScene : public Scene
 private:
     bool isTyping = true;
     std::string name;
+    float blinkingCursorTimer = 0.0f;
 public:
     EndScene(Game &game) : Scene(game) {}
     virtual void init() override;

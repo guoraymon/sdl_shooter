@@ -39,7 +39,8 @@ public:
     int getWindowWidth() { return windowWidth; }
     int getWindowHeight() { return windowHeight; }
     Uint32 getFrameTime() { return frameTime; }
-    void renderText(const std::string &text, int y, bool isTitle = false, bool isCenter = false);
+    SDL_Point renderText(std::string text, int y, bool isTitle = false, bool isCenter = false);
+    SDL_Point renderTextPos(std::string text, int x, int y, bool isTitle = false);
     void changeScene(Scene *newScene);
     void setFinalScore(int score);
     int getFinalScore() { return finalScore; }

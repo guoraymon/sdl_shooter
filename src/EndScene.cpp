@@ -13,7 +13,24 @@ void EndScene::run(float deltaTime)
     game.renderText("Please input your name:", game.getWindowHeight() / 2 + 20, false, true);
     if (isTyping)
     {
-        game.renderText(name + "_", game.getWindowHeight() / 2 + 50, false, true);
+        SDL_Point point;
+        if (name != "")
+        {
+            point = game.renderText(name, game.getWindowHeight() / 2 + 50, false, true);
+        }
+        else
+        {
+            point = SDL_Point{(game.getWindowWidth() - 10) / 2, game.getWindowHeight() / 2 + 50};
+        }
+        blinkingCursorTimer += deltaTime;
+        if (blinkingCursorTimer >= 0.5f)
+        {
+            game.renderTextPos("_", point.x, game.getWindowHeight() / 2 + 50, false);
+            if (blinkingCursorTimer >= 1.0f)
+            {
+                blinkingCursorTimer = 0.0f;
+            }
+        }
     }
     else
     {

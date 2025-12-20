@@ -42,7 +42,7 @@ private:
     int score = 0;
 
     Uint32 endTime = 0;
-    Uint32 endDelay = 3000; // milliseconds
+    Uint32 endDelay = 2000; // milliseconds
 
 public:
     MainScene(Game &game) : Scene(game) {}

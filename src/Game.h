@@ -27,6 +27,8 @@ private:
 
     Scene *currentScene = nullptr;
 
+    int finalScore = 0;
+
 public:
     Game();
     ~Game();
@@ -39,6 +41,8 @@ public:
     Uint32 getFrameTime() { return frameTime; }
     void renderText(const std::string &text, int y, bool isTitle = false, bool isCenter = false);
     void changeScene(Scene *newScene);
+    void setFinalScore(int score);
+    int getFinalScore() { return finalScore; }
 };
 
 #endif

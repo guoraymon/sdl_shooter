@@ -220,6 +220,7 @@ void MainScene::run(float deltaTime)
                     {
                         Mix_PlayChannel(-1, sounds["player_explosion"], 0);
                         endTime = SDL_GetTicks();
+                        game.setFinalScore(score);
                         return;
                     }
                     delete projectile;

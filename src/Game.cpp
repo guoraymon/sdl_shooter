@@ -113,6 +113,11 @@ void Game::renderText(const std::string &text, int y, bool isTitle, bool isCente
     SDL_DestroyTexture(textTexture);
 }
 
+void Game::setFinalScore(int score)
+{
+    finalScore = score;
+}
+
 void Game::clean()
 {
     if (currentScene != nullptr)

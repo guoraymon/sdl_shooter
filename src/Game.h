@@ -4,6 +4,7 @@
 #include <list>
 #include <map>
 #include <random>
+#include <fstream>
 
 #include "SDL.h"
 #include "SDL_mixer.h"
@@ -57,6 +58,39 @@ public:
         }
     }
     std::multimap<int, std::string, std::greater<int>> getLeaderboard() { return leaderboard; }
+
+    void saveData()
+    {
+        std::ofstream file("save.dat");
+        if (file.is_open())
+        {
+            for (const auto &entry : leaderboard)
+            {
+                file << entry.second << "," << entry.first << std::endl;
+            }
+            file.close();
+        }
+    }
+
+    void loadData()
+    {
+        std::ifstream file("save.dat");
+        if (file.is_open())
+        {
+            std::string line;
+            while (std::getline(file, line))
+            {
+                size_t delimiterPos = line.find(',');
+                if (delimiterPos != std::string::npos)
+                {
+                    std::string name = line.substr(0, delimiterPos);
+                    int score = std::stoi(line.substr(delimiterPos + 1));
+                    leaderboard.insert(std::make_pair(score, name));
+                }
+            }
+            file.close();
+        }
+    }
 };
 
 #endif

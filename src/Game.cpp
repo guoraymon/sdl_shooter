@@ -4,7 +4,6 @@
 #include "Game.h"
 #include "Object.h"
 #include "TitleScene.h"
-#include "EndScene.h"
 
 Game::Game()
 {
@@ -12,6 +11,7 @@ Game::Game()
 
 Game::~Game()
 {
+    saveData();
     Game::clean();
 }
 
@@ -50,7 +50,8 @@ void Game::init()
     titleFont = TTF_OpenFont("assets/font/VonwaonBitmap-16px.ttf", 64);
     textFont = TTF_OpenFont("assets/font/VonwaonBitmap-16px.ttf", 32);
 
-    changeScene(new EndScene(*this));
+    loadData();
+    changeScene(new TitleScene(*this));
 }
 
 void Game::run()

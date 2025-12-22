@@ -8,11 +8,11 @@ void EndScene::init()
 
 void EndScene::run(float deltaTime)
 {
-    game.renderText("Game Over", game.getWindowHeight() / 2 - 100, true, true);
-    game.renderText("Final Score: " + std::to_string(game.getFinalScore()), game.getWindowHeight() / 2 - 10, false, true);
-    game.renderText("Please input your name:", game.getWindowHeight() / 2 + 20, false, true);
     if (isTyping)
     {
+        game.renderText("Game Over", game.getWindowHeight() / 2 - 100, true, true);
+        game.renderText("Final Score: " + std::to_string(game.getFinalScore()), game.getWindowHeight() / 2 - 10, false, true);
+        game.renderText("Please input your name:", game.getWindowHeight() / 2 + 20, false, true);
         SDL_Point point;
         if (name != "")
         {
@@ -34,8 +34,18 @@ void EndScene::run(float deltaTime)
     }
     else
     {
-        game.renderText(name, game.getWindowHeight() / 2 + 50, false, true);
-        game.renderText("Press 'R' to restart", game.getWindowHeight() / 2 + 80, false, true);
+        auto offsetY = game.getWindowHeight() * 0.2;
+        game.renderText("Leaderboard", offsetY, false, true);
+        offsetY += 40;
+        auto i = 1;
+        for (auto &entry : game.getLeaderboard())
+        {
+            game.renderTextPos(std::to_string(i) + ". " + entry.second, 50, offsetY);
+            game.renderTextPos(std::to_string(entry.first), game.getWindowWidth() - 100, offsetY);
+            offsetY += 30;
+            i++;
+        }
+        game.renderText("Press 'R' to restart", game.getWindowHeight() / 2 + 100, false, true);
     }
 }
 
@@ -69,6 +79,7 @@ void EndScene::handleEvent(SDL_Event *event)
             else if (event->key.keysym.sym == SDLK_RETURN || event->key.keysym.sym == SDLK_KP_ENTER)
             {
                 isTyping = false;
+                game.insertLeaderboard(game.getFinalScore(), name);
             }
         }
     }

@@ -29,6 +29,8 @@ private:
 
     int finalScore = 0;
 
+    std::multimap<int, std::string, std::greater<int>> leaderboard;
+
 public:
     Game();
     ~Game();
@@ -42,8 +44,19 @@ public:
     SDL_Point renderText(std::string text, int y, bool isTitle = false, bool isCenter = false);
     SDL_Point renderTextPos(std::string text, int x, int y, bool isTitle = false);
     void changeScene(Scene *newScene);
+
     void setFinalScore(int score);
     int getFinalScore() { return finalScore; }
+
+    void insertLeaderboard(int score, const std::string &name)
+    {
+        leaderboard.insert(std::make_pair(score, name));
+        if (leaderboard.size() > 8)
+        {
+            leaderboard.erase(--leaderboard.end());
+        }
+    }
+    std::multimap<int, std::string, std::greater<int>> getLeaderboard() { return leaderboard; }
 };
 
 #endif

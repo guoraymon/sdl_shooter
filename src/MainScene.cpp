@@ -13,6 +13,8 @@ void MainScene::init()
     player.height /= 3;
     player.position.x = game.getWindowWidth() / 2 - player.width / 2;
     player.position.y = game.getWindowHeight() - player.height;
+    player.velocity.x = 0.0f;  // 初始化速度为0
+    player.velocity.y = 0.0f;
 
     playerProjectileTemplate.texture = IMG_LoadTexture(game.getRenderer(), "assets/image/laser-1.png");
     SDL_QueryTexture(playerProjectileTemplate.texture, NULL, NULL, &playerProjectileTemplate.width, &playerProjectileTemplate.height);
@@ -389,33 +391,116 @@ void MainScene::handleEvent(SDL_Event *event)
 void MainScene::keyboardController(float deltaTime)
 {
     auto keyboardState = SDL_GetKeyboardState(NULL);
+
+    // 计算输入方向
+    float inputX = 0.0f;
+    float inputY = 0.0f;
+
     if (keyboardState[SDL_SCANCODE_W])
     {
-        if (player.position.y > 0)
-        {
-            player.position.y -= player.speed * deltaTime;
-        }
-    }
-    if (keyboardState[SDL_SCANCODE_A])
-    {
-        if (player.position.x > 0)
-        {
-            player.position.x -= player.speed * deltaTime;
-        }
+        inputY = -1.0f;
     }
     if (keyboardState[SDL_SCANCODE_S])
     {
-        if (player.position.y < game.getWindowHeight() - player.height)
-        {
-            player.position.y += player.speed * deltaTime;
-        }
+        inputY = 1.0f;
+    }
+    if (keyboardState[SDL_SCANCODE_A])
+    {
+        inputX = -1.0f;
     }
     if (keyboardState[SDL_SCANCODE_D])
     {
-        if (player.position.x < game.getWindowWidth() - player.width)
+        inputX = 1.0f;
+    }
+
+    // 根据输入应用加速度
+    if (inputX != 0.0f)
+    {
+        player.velocity.x += inputX * player.acceleration * deltaTime;
+        // 限制最大速度
+        if (player.velocity.x > player.maxSpeed)
         {
-            player.position.x += deltaTime * player.speed;
+            player.velocity.x = player.maxSpeed;
         }
+        else if (player.velocity.x < -player.maxSpeed)
+        {
+            player.velocity.x = -player.maxSpeed;
+        }
+    }
+
+    if (inputY != 0.0f)
+    {
+        player.velocity.y += inputY * player.acceleration * deltaTime;
+        // 限制最大速度
+        if (player.velocity.y > player.maxSpeed)
+        {
+            player.velocity.y = player.maxSpeed;
+        }
+        else if (player.velocity.y < -player.maxSpeed)
+        {
+            player.velocity.y = -player.maxSpeed;
+        }
+    }
+
+    // 如果没有输入，应用减速
+    if (inputX == 0.0f)
+    {
+        // 应用水平减速
+        if (player.velocity.x > 0)
+        {
+            player.velocity.x -= player.deceleration * deltaTime;
+            if (player.velocity.x < 0)
+                player.velocity.x = 0;
+        }
+        else if (player.velocity.x < 0)
+        {
+            player.velocity.x += player.deceleration * deltaTime;
+            if (player.velocity.x > 0)
+                player.velocity.x = 0;
+        }
+    }
+
+    if (inputY == 0.0f)
+    {
+        // 应用垂直减速
+        if (player.velocity.y > 0)
+        {
+            player.velocity.y -= player.deceleration * deltaTime;
+            if (player.velocity.y < 0)
+                player.velocity.y = 0;
+        }
+        else if (player.velocity.y < 0)
+        {
+            player.velocity.y += player.deceleration * deltaTime;
+            if (player.velocity.y > 0)
+                player.velocity.y = 0;
+        }
+    }
+
+    // 更新位置
+    player.position.x += player.velocity.x * deltaTime;
+    player.position.y += player.velocity.y * deltaTime;
+
+    // 边界检查
+    if (player.position.x < 0)
+    {
+        player.position.x = 0;
+        player.velocity.x = 0; // 碰到边界时停止移动
+    }
+    if (player.position.x > game.getWindowWidth() - player.width)
+    {
+        player.position.x = game.getWindowWidth() - player.width;
+        player.velocity.x = 0; // 碰到边界时停止移动
+    }
+    if (player.position.y < 0)
+    {
+        player.position.y = 0;
+        player.velocity.y = 0; // 碰到边界时停止移动
+    }
+    if (player.position.y > game.getWindowHeight() - player.height)
+    {
+        player.position.y = game.getWindowHeight() - player.height;
+        player.velocity.y = 0; // 碰到边界时停止移动
     }
 
     if (keyboardState[SDL_SCANCODE_J])

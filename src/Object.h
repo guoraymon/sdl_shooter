@@ -8,7 +8,10 @@ struct Player
     SDL_FPoint position = {0, 0};
     int width = 0;
     int height = 0;
-    int speed = 200;
+    SDL_FPoint velocity = {0, 0};  // 添加速度向量
+    float maxSpeed = 250.0f;       // 最大速度 - 适中速度
+    float acceleration = 800.0f;   // 加速度 - 更快的响应
+    float deceleration = 600.0f;   // 减速度 - 平衡的减速
     Uint32 coolDown = 500;
     Uint32 lastShootTime = 0;
     int health = 3;

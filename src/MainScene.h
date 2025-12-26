@@ -44,6 +44,9 @@ private:
     Uint32 endTime = 0;
     Uint32 endDelay = 2000; // milliseconds
 
+    // 暂停相关
+    bool isPaused = false;
+
 public:
     MainScene(Game &game) : Scene(game) {}
     virtual void init() override;
@@ -51,4 +54,5 @@ public:
     virtual void clean() override;
     virtual void handleEvent(SDL_Event *event) override;
     void keyboardController(float deltaTime);
+    void renderPauseMenu();
 };

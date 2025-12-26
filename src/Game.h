@@ -49,6 +49,10 @@ public:
     void setFinalScore(int score);
     int getFinalScore() { return finalScore; }
 
+    // 添加获取字体的方法
+    TTF_Font* getTextFont() { return textFont; }
+    TTF_Font* getTitleFont() { return titleFont; }
+
     void insertLeaderboard(int score, const std::string &name)
     {
         leaderboard.insert(std::make_pair(score, name));

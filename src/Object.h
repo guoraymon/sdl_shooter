@@ -85,7 +85,10 @@ struct Background
     SDL_FPoint position = {0, 0};
     int width = 0;
     int height = 0;
-    int speed = 0;
+    int speed = 0;           // 垂直移动速度
+    float horizontalOffset = 0.0f;   // 水平偏移量
+    float horizontalSpeed = 0.0f;    // 水平移动速度（由玩家移动引起）
+    float horizontalMultiplier = 0.0f; // 水平移动的倍率（用于实现不同层次效果）
 };
 
 #endif

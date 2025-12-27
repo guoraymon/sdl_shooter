@@ -45,11 +45,13 @@ void MainScene::init()
     nearBackground.width = game.getWindowWidth();
     nearBackground.height = game.getWindowHeight();
     nearBackground.speed = 50;
+    nearBackground.horizontalMultiplier = 0.3f; // 近景背景水平移动更明显
     // far background
     farBackground.texture = IMG_LoadTexture(game.getRenderer(), "assets/image/Stars-B.png");
     farBackground.width = game.getWindowWidth();
     farBackground.height = game.getWindowHeight();
     farBackground.speed = 20;
+    farBackground.horizontalMultiplier = 0.1f; // 远景背景水平移动较轻微
 
     // Load health texture
     healthTexture = IMG_LoadTexture(game.getRenderer(), "assets/image/Health UI Black.png");
@@ -324,25 +326,62 @@ void MainScene::run(float deltaTime)
         }
 
         // Render backgrounds
+        // 计算背景水平移动（基于玩家速度）
+        nearBackground.horizontalOffset += player.velocity.x * nearBackground.horizontalMultiplier * deltaTime;
+        farBackground.horizontalOffset += player.velocity.x * farBackground.horizontalMultiplier * deltaTime;
+
+        // 限制背景水平偏移，防止偏移过大
+        nearBackground.horizontalOffset = fmodf(nearBackground.horizontalOffset, nearBackground.width);
+        farBackground.horizontalOffset = fmodf(farBackground.horizontalOffset, farBackground.width);
+
+        // 垂直移动
         nearBackground.position.y += nearBackground.speed * deltaTime;
         if (nearBackground.position.y >= nearBackground.height)
         {
             nearBackground.position.y = 0;
         }
-        SDL_Rect nearRect1 = {0, static_cast<int>(nearBackground.position.y), nearBackground.width, nearBackground.height};
+        // 渲染近景背景
+        SDL_Rect nearRect1 = {static_cast<int>(nearBackground.horizontalOffset), static_cast<int>(nearBackground.position.y), nearBackground.width, nearBackground.height};
         SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect1);
-        SDL_Rect nearRect2 = {0, static_cast<int>(nearBackground.position.y - nearBackground.height), game.getWindowWidth(), nearBackground.height};
+        SDL_Rect nearRect2 = {static_cast<int>(nearBackground.horizontalOffset), static_cast<int>(nearBackground.position.y - nearBackground.height), nearBackground.width, nearBackground.height};
         SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect2);
+
+        // 处理水平偏移的边界情况
+        if (nearBackground.horizontalOffset < 0) {
+            SDL_Rect nearRect3 = {static_cast<int>(nearBackground.horizontalOffset + nearBackground.width), static_cast<int>(nearBackground.position.y), static_cast<int>(-nearBackground.horizontalOffset), nearBackground.height};
+            SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect3);
+            SDL_Rect nearRect4 = {static_cast<int>(nearBackground.horizontalOffset + nearBackground.width), static_cast<int>(nearBackground.position.y - nearBackground.height), static_cast<int>(-nearBackground.horizontalOffset), nearBackground.height};
+            SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect4);
+        } else if (nearBackground.horizontalOffset > 0) {
+            SDL_Rect nearRect3 = {0, static_cast<int>(nearBackground.position.y), static_cast<int>(nearBackground.horizontalOffset), nearBackground.height};
+            SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect3);
+            SDL_Rect nearRect4 = {0, static_cast<int>(nearBackground.position.y - nearBackground.height), static_cast<int>(nearBackground.horizontalOffset), nearBackground.height};
+            SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect4);
+        }
 
         farBackground.position.y += farBackground.speed * deltaTime;
         if (farBackground.position.y >= farBackground.height)
         {
             farBackground.position.y = 0;
         }
-        SDL_Rect farRect1 = {0, static_cast<int>(farBackground.position.y), farBackground.width, farBackground.height};
+        // 渲染远景背景
+        SDL_Rect farRect1 = {static_cast<int>(farBackground.horizontalOffset), static_cast<int>(farBackground.position.y), farBackground.width, farBackground.height};
         SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect1);
-        SDL_Rect farRect2 = {0, static_cast<int>(farBackground.position.y - farBackground.height), farBackground.width, farBackground.height};
+        SDL_Rect farRect2 = {static_cast<int>(farBackground.horizontalOffset), static_cast<int>(farBackground.position.y - farBackground.height), farBackground.width, farBackground.height};
         SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect2);
+
+        // 处理水平偏移的边界情况
+        if (farBackground.horizontalOffset < 0) {
+            SDL_Rect farRect3 = {static_cast<int>(farBackground.horizontalOffset + farBackground.width), static_cast<int>(farBackground.position.y), static_cast<int>(-farBackground.horizontalOffset), farBackground.height};
+            SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect3);
+            SDL_Rect farRect4 = {static_cast<int>(farBackground.horizontalOffset + farBackground.width), static_cast<int>(farBackground.position.y - farBackground.height), static_cast<int>(-farBackground.horizontalOffset), farBackground.height};
+            SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect4);
+        } else if (farBackground.horizontalOffset > 0) {
+            SDL_Rect farRect3 = {0, static_cast<int>(farBackground.position.y), static_cast<int>(farBackground.horizontalOffset), farBackground.height};
+            SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect3);
+            SDL_Rect farRect4 = {0, static_cast<int>(farBackground.position.y - farBackground.height), static_cast<int>(farBackground.horizontalOffset), farBackground.height};
+            SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect4);
+        }
 
         // Render player health
         SDL_SetTextureColorMod(healthTexture, 255, 255, 255);
@@ -431,17 +470,63 @@ void MainScene::run(float deltaTime)
                 SDL_RenderCopy(game.getRenderer(), item->texture, NULL, &itemRect);
             }
 
-            // Render backgrounds
-            SDL_Rect nearRect1 = {0, static_cast<int>(nearBackground.position.y), nearBackground.width, nearBackground.height};
+            // Render backgrounds (in pause state, update horizontal offsets based on player velocity)
+            // 计算背景水平移动（基于玩家速度）
+            nearBackground.horizontalOffset += player.velocity.x * nearBackground.horizontalMultiplier * deltaTime;
+            farBackground.horizontalOffset += player.velocity.x * farBackground.horizontalMultiplier * deltaTime;
+
+            // 限制背景水平偏移，防止偏移过大
+            nearBackground.horizontalOffset = fmodf(nearBackground.horizontalOffset, nearBackground.width);
+            farBackground.horizontalOffset = fmodf(farBackground.horizontalOffset, farBackground.width);
+
+            // 垂直移动 (保持原有行为)
+            nearBackground.position.y += nearBackground.speed * deltaTime;
+            if (nearBackground.position.y >= nearBackground.height)
+            {
+                nearBackground.position.y = 0;
+            }
+            // 渲染近景背景
+            SDL_Rect nearRect1 = {static_cast<int>(nearBackground.horizontalOffset), static_cast<int>(nearBackground.position.y), nearBackground.width, nearBackground.height};
             SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect1);
-            SDL_Rect nearRect2 = {0, static_cast<int>(nearBackground.position.y - nearBackground.height), game.getWindowWidth(), nearBackground.height};
+            SDL_Rect nearRect2 = {static_cast<int>(nearBackground.horizontalOffset), static_cast<int>(nearBackground.position.y - nearBackground.height), nearBackground.width, nearBackground.height};
             SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect2);
 
-            farBackground.position.y = fmodf(farBackground.position.y, farBackground.height);
-            SDL_Rect farRect1 = {0, static_cast<int>(farBackground.position.y), farBackground.width, farBackground.height};
+            // 处理水平偏移的边界情况
+            if (nearBackground.horizontalOffset < 0) {
+                SDL_Rect nearRect3 = {static_cast<int>(nearBackground.horizontalOffset + nearBackground.width), static_cast<int>(nearBackground.position.y), static_cast<int>(-nearBackground.horizontalOffset), nearBackground.height};
+                SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect3);
+                SDL_Rect nearRect4 = {static_cast<int>(nearBackground.horizontalOffset + nearBackground.width), static_cast<int>(nearBackground.position.y - nearBackground.height), static_cast<int>(-nearBackground.horizontalOffset), nearBackground.height};
+                SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect4);
+            } else if (nearBackground.horizontalOffset > 0) {
+                SDL_Rect nearRect3 = {0, static_cast<int>(nearBackground.position.y), static_cast<int>(nearBackground.horizontalOffset), nearBackground.height};
+                SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect3);
+                SDL_Rect nearRect4 = {0, static_cast<int>(nearBackground.position.y - nearBackground.height), static_cast<int>(nearBackground.horizontalOffset), nearBackground.height};
+                SDL_RenderCopy(game.getRenderer(), nearBackground.texture, NULL, &nearRect4);
+            }
+
+            farBackground.position.y += farBackground.speed * deltaTime;
+            if (farBackground.position.y >= farBackground.height)
+            {
+                farBackground.position.y = 0;
+            }
+            // 渲染远景背景
+            SDL_Rect farRect1 = {static_cast<int>(farBackground.horizontalOffset), static_cast<int>(farBackground.position.y), farBackground.width, farBackground.height};
             SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect1);
-            SDL_Rect farRect2 = {0, static_cast<int>(farBackground.position.y - farBackground.height), farBackground.width, farBackground.height};
+            SDL_Rect farRect2 = {static_cast<int>(farBackground.horizontalOffset), static_cast<int>(farBackground.position.y - farBackground.height), farBackground.width, farBackground.height};
             SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect2);
+
+            // 处理水平偏移的边界情况
+            if (farBackground.horizontalOffset < 0) {
+                SDL_Rect farRect3 = {static_cast<int>(farBackground.horizontalOffset + farBackground.width), static_cast<int>(farBackground.position.y), static_cast<int>(-farBackground.horizontalOffset), farBackground.height};
+                SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect3);
+                SDL_Rect farRect4 = {static_cast<int>(farBackground.horizontalOffset + farBackground.width), static_cast<int>(farBackground.position.y - farBackground.height), static_cast<int>(-farBackground.horizontalOffset), farBackground.height};
+                SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect4);
+            } else if (farBackground.horizontalOffset > 0) {
+                SDL_Rect farRect3 = {0, static_cast<int>(farBackground.position.y), static_cast<int>(farBackground.horizontalOffset), farBackground.height};
+                SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect3);
+                SDL_Rect farRect4 = {0, static_cast<int>(farBackground.position.y - farBackground.height), static_cast<int>(farBackground.horizontalOffset), farBackground.height};
+                SDL_RenderCopy(game.getRenderer(), farBackground.texture, NULL, &farRect4);
+            }
 
             // Render player health
             SDL_SetTextureColorMod(healthTexture, 255, 255, 255);
